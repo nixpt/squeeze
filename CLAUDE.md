@@ -5,10 +5,13 @@ Intuitive one-command build tool for the Crush ecosystem — wraps
 `.jagent/PROJECT.md` for the full picture and `.jagent/planning/` for the
 execution board (`STATE.md` → `TASKS.md` → `tickets/`).
 
-Peer path-dep on `../crush-ast/crates/{crush-pkg,crush-vm}` — flat
-`projects/` layout, same pattern `buckets` uses. Never commit to `main`
-directly on shared checkouts; this repo has none of that shared-checkout
-history yet (fresh v0.1), but the convention still applies going forward.
+Peer path-dep on `../../crush-ast/crates/{crush-pkg,crush-vm}` — lives in
+`projects/crush-workspace/` alongside crush-ast's other consumer repos (see
+`../CLAUDE.md` and `../README.md` for that grouping). Never commit to
+`master` directly on shared checkouts; this repo has none of that
+shared-checkout history yet, but the convention still applies going forward.
+
+Remote: `nixpt/squeeze` (public, pushed 2026-07-14).
 
 ## Build
 
