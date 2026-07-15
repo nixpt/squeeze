@@ -1,0 +1,25 @@
+[package]
+name = "squeeze"
+description = "Intuitive one-command build tool for the Crush ecosystem — wraps crush-pkg's check/build/run pipeline"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/nixpt/squeeze"
+repository = "https://github.com/nixpt/squeeze"
+readme = "README.md"
+keywords = ["crush", "build-tool", "cli"]
+categories = ["command-line-utilities", "development-tools::build-utils"]
+
+[[bin]]
+name = "squeeze"
+path = "src/main.rs"
+
+[dependencies]
+# Peer path-dep, flat projects/ layout — same pattern buckets/crush-web use
+# to reach into crush-ast. crush-pkg's lib facade (manifest/builder/runners)
+# is the real pipeline; squeeze doesn't reimplement compile/run, just
+# composes it into one intuitive flow.
+crush-pkg = { path = "../crush-ast/crates/crush-pkg", version = "0.3.0" }
+crush-vm = { path = "../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
+anyhow = "1.0"
+clap = { version = "4", features = ["derive"] }
