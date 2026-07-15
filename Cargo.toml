@@ -19,7 +19,7 @@ path = "src/main.rs"
 # to reach into crush-ast. crush-pkg's lib facade (manifest/builder/runners)
 # is the real pipeline; squeeze doesn't reimplement compile/run, just
 # composes it into one intuitive flow.
-crush-pkg = { path = "../crush-ast/crates/crush-pkg", version = "0.3.0" }
-crush-vm = { path = "../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
+crush-pkg = { path = "../../crush-ast/crates/crush-pkg", version = "0.3.0" }
+crush-vm = { path = "../../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
