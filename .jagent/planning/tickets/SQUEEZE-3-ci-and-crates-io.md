@@ -19,7 +19,7 @@
 - [ ] `.github/workflows/ci.yml` runs:
   - [ ] `cargo test` on the stable Rust toolchain
   - [ ] `cargo check` on the MSRV (e.g. 1.85, pinned in `rust-toolchain.toml`)
-  - [ ] `cargo fmt --check` and `cargo clippy -- -D warnings` (optional in first iteration; separate ticket if noisy)
+  - [ ] `cargo fmt --check` and `cargo clippy -- -D warnings` (NOT in the first iteration — master’s `src/main.rs` is neither fmt-clean nor clippy-clean as of v0.1.0; if added later, capture a one-PR remediation for the existing source first so the CI step has a stable target.)
   - [ ] `cargo deny check advisories` (staged audit of the path-dep tree)
 - [ ] `cargo publish --dry-run` succeeds locally — license files, README rendering, `Cargo.toml` metadata (keywords, categories, description length) line up with what crates.io expects
 - [ ] Tag-driven release workflow (`.github/workflows/release.yml`) that runs `cargo publish` on `v*` tags — needs `CARGO_REGISTRY_TOKEN` or OIDC trust configured on the repo
@@ -38,6 +38,7 @@
 - `.github/workflows/ci.yml`
 - `.github/workflows/release.yml`
 - `rust-toolchain.toml`
+- `(new) deny.toml` — required for `cargo deny check advisories` to be more than a no-op. Configure skip tree, advisories DB source, and bans. (Most existing `crates/-` advisories will be inherited from the config; the file is created from scratch on this branch.)
 - (Optional) `.github/dependabot.yml`
 
 ## Files to modify

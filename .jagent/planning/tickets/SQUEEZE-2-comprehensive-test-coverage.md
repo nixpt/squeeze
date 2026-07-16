@@ -26,8 +26,13 @@ There are zero tests under `squeeze/`. Without tests, changing the load path (SQ
   - [ ] `squeeze` (default flow) on a crush capsule exits 0, prints the documented three-stage status lines, runs the entry source
   - [ ] `squeeze build` / `squeeze check` / `squeeze run` / `squeeze` on a missing `capsule.toml` exits with the documented "no manifest" error and exit code
   - [ ] `squeeze build` / `squeeze check` on a non-crush capsule exits with the documented "doesn't apply" error (post M2's rewrite; test for the v0.1 generic refusal can stay until M2 lands, then be updated)
-- [ ] Status-line format tests: literal `checking <name> v<version>` / `building <name> v<version>` / `running <name>` / `done: N function(s), N byte(s)` strings each get a focused test asserting exact text
-- [ ] Exit-code contract: success=0, runtime/panic=1, parse/manifest=2, wrong-language=3, missing-manifest=4 (these are M6's contract captured now)
+- [ ] Status-line format tests: literal status-line strings each get a focused test asserting exact text. Capture both the stand-alone subcommand output AND the default-flow’s three-stage output, since the two diverge in indentation and `done:`-prefixing:
+  - [ ] `checking <name> v<version>` (both stand-alone `squeeze check` and default-flow stage 1)
+  - [ ] `building <name> v<version>` (both stand-alone `squeeze build` and default-flow stage 2)
+  - [ ] `running <name>` (both stand-alone `squeeze run` and default-flow stage 3)
+  - [ ] `done: N function(s), N byte(s)` (stand-alone `squeeze build`’s tail line only)
+  - [ ] `  N function(s), N byte(s)` (default-flow stage 2’s tail line — TWO-space indent, NO `done:` prefix; literal-string equality)
+- [ ] Exit-code contract (mirrors SQUEEZE-6's `SqueezeExit` enum, named verbatim so MANUAL.md doesn't drift): Ok=0, Runtime=1, ManifestParse=2 (manifest file exists but won't parse — from `Manifest::from_file` failing), WrongLanguage=3, MissingManifest=4 (no capsule.toml/Capsule.toml/crush.toml/Crush.toml found in cwd — from `manifest_path(&cwd)` returning None).
 - [ ] All tests run under `cargo test` with no extra setup
 
 ## Technical approach

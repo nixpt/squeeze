@@ -16,6 +16,8 @@ M0 (skeleton) shipped 2026-07-14 and verified against a real `squeeze new demo` 
 
 ## Milestones
 
+Listed in enumeration order; execution order is in the rationale section below.
+
 | Phase | Name | Goal | Exit criteria |
 |-------|------|------|----------------|
 | **M0** | Ship the skeleton | `new` / `check` / `build` / `run` + default composed flow, crush-language only. | Verified against a real capsule (see STATE). |
