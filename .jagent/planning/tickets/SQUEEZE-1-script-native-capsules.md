@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | SQUEEZE-1 |
 | **Priority** | P2 |
-| **Status** | Backlog |
+| **Status** | In Progress (code landed on feature/m2-script-native-cutover; cargo check blocked by upstream crush-vm peer-crate source error — see commit message for details) |
 | **Phase** | M2 |
 | **Assignee** | unassigned |
 | **Dependencies** | **SQUEEZE-2** (M1 comprehensive tests must land first — load-path rewrite needs a regression net) |
