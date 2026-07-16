@@ -3,23 +3,30 @@ name = "squeeze"
 description = "Intuitive one-command build tool for the Crush ecosystem — wraps crush-pkg's check/build/run pipeline"
 version = "0.1.0"
 edition = "2024"
+# edition = "2024" stabilised in 1.85.0; pin the contract for downstream callers.
+rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/nixpt/squeeze"
 repository = "https://github.com/nixpt/squeeze"
 readme = "README.md"
 keywords = ["crush", "build-tool", "cli"]
 categories = ["command-line-utilities", "development-tools::build-utils"]
+# Don't ship agent-memory / planning board in the published tarball.
+exclude = [".dejavue/**", ".jagent/**"]
 
 [[bin]]
 name = "squeeze"
 path = "src/main.rs"
 
 [dependencies]
-# Peer path-dep, flat projects/ layout — same pattern buckets/crush-web use
-# to reach into crush-ast. crush-pkg's lib facade (manifest/builder/runners)
-# is the real pipeline; squeeze doesn't reimplement compile/run, just
-# composes it into one intuitive flow.
-crush-pkg = { path = "../../crush-ast/crates/crush-pkg", version = "0.3.0" }
-crush-vm = { path = "../../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
+# `crush-pkg` and `crush-vm` are registry-only: the original `path =`
+# fields were removed so that `cargo publish` does not trigger a crates.io
+# index lookup at packaging time. There is no `[patch.crates-io]` here
+# either, so this Cargo.toml is registry-pure — a fresh clone + `cargo build`
+# works the moment upstream `crush-pkg v0.3.0` and `crush-vm v0.3.0` land.
+# Until those land, both `cargo check` on this branch AND `cargo publish
+# --dry-run` fail with the same upstream-blocker error (see RELEASE.md).
+crush-pkg = "0.3.0"
+crush-vm = { version = "0.3.0", default-features = false }
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
