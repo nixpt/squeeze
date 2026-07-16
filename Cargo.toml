@@ -19,14 +19,16 @@ name = "squeeze"
 path = "src/main.rs"
 
 [dependencies]
-# `crush-pkg` and `crush-vm` are registry-only: the original `path =`
-# fields were removed so that `cargo publish` does not trigger a crates.io
-# index lookup at packaging time. There is no `[patch.crates-io]` here
-# either, so this Cargo.toml is registry-pure — a fresh clone + `cargo build`
-# works the moment upstream `crush-pkg v0.3.0` and `crush-vm v0.3.0` land.
-# Until those land, both `cargo check` on this branch AND `cargo publish
-# --dry-run` fail with the same upstream-blocker error (see RELEASE.md).
-crush-pkg = "0.3.0"
-crush-vm = { version = "0.3.0", default-features = false }
+# Peer path-dep, flat projects/ layout — same pattern buckets/crush-web use
+# to reach into crush-ast. Kept alongside `version =` (not registry-only):
+# `path` + `version` together means local builds resolve via the path
+# (crush-workspace/CLAUDE.md: don't switch this repo to a registry-only dep
+# until crush-pkg/crush-vm actually publish — doing so broke `cargo check`
+# here for no local benefit), while `cargo publish` still requires and
+# verifies the registry version, so the upstream-gate blocker documented in
+# RELEASE.md is unchanged: `cargo publish --dry-run` still fails until
+# crush-pkg v0.3.0 / crush-vm v0.3.0 land on crates.io.
+crush-pkg = { path = "../../crush-ast/crates/crush-pkg", version = "0.3.0" }
+crush-vm = { path = "../../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
