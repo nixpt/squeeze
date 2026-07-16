@@ -1,29 +1,40 @@
 //! `squeeze` — one intuitive command for the Crush build/run pipeline.
 //!
-//! `crush-pkg` already does the real work (parse → compile → CVM1 bytecode,
-//! via `crush_pkg::builder::PackageBuilder`); squeeze doesn't reimplement
-//! any of it. What it adds: `crush-pkg build` and `crush-pkg run` are two
-//! separate, uncomposed steps today (`crush-pkg run` interprets the entry
-//! source directly — it doesn't call `build()` first, doesn't need
-//! `target/` to exist, and doesn't leave build artifacts behind). Running
-//! `squeeze` with no subcommand does check → build → write `target/` →
-//! run, in one go and with one status line per stage, the way `cargo run`
-//! does — while `squeeze build`/`check`/`run` stay available individually
-//! for when you want just one step.
+//! `crush-pkg` already does the real work. `squeeze` is a thin composition
+//! layer over `crush_pkg::builder::PackageBuilder` (for crush-language
+//! build/check) and `crush_pkg::runners::get_runner_for_payload` /
+//! `::get_runner` (for run on any capsule type — crush, native, bun/node/
+//! deno/python/sona scripts). It does not reimplement compile or run; it
+//! composes the existing `crush-pkg` pipeline into one cargo-shaped UX.
 //!
-//! Scope for this skeleton: `language = "crush"` capsules only, via
-//! `PackageBuilder`/`crush_vm::run_with_caps` directly. `crush-pkg`'s CLI
-//! `run` command also supports Script (bun/node/deno/python) and Native
-//! capsules through the `CapsuleRunner`/`CrushRunner` trait system in
-//! `crush_pkg::runners` — squeeze doesn't wire that in yet. Not a silent
-//! gap: a non-crush `language` value errors out explicitly rather than
-//! being mis-handled.
+//! `crush-pkg build` and `crush-pkg run` are two separate, uncomposed steps
+//! today (`crush-pkg run` interprets the entry source directly, never calls
+//! `build()`, never writes `target/`). `squeeze` composes them: the no-
+//! subcommand default flow checks builds writes `target/` runs, with one
+//! status line per stage, while `squeeze build / check / run` stay available
+//! individually for when only one step is wanted.
+//!
+//! M2 (this commit): full cutover (per SQUEEZE-1 ratification). `cmd_run`
+//! and the run leg of `cmd_default` route through the `CapsuleRunner`
+//! dispatch for every capsule type — so `squeeze run` works on Script and
+//! Native capsules, not just crush. `cmd_build` / `cmd_check` keep
+//! `PackageBuilder` (crush-source only) because the `.cvm` artifact is
+//! crush-language-specific; those subcommands refuse non-crush with a
+//! clear "does not apply" message instead of silently mis-routing.
+//!
+//! Argument forwarding (`squeeze run -- arg1 arg2 ...`) is intentionally
+//! NOT implemented in this M2 first cut — `clap` would consume any
+//! trailing args as another subcommand without `trailing_var_arg`. Tracked
+//! as a SQUEEZE-1 follow-up.
+//!
+//! #[start_of_lifetime_relevant_to_M2_cutover]
 
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
 use crush_pkg::Manifest;
 use crush_pkg::builder::PackageBuilder;
-use std::path::PathBuf;
+use crush_pkg::runners::ExecutionResult;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
 #[command(name = "squeeze")]
@@ -41,9 +52,9 @@ enum Commands {
         #[arg(short, long)]
         dir: Option<PathBuf>,
     },
-    /// Type-check without emitting bytecode
+    /// Type-check without emitting bytecode (crush-source only)
     Check,
-    /// Compile and write target/<name>.cvm + target/<name>.casm.json
+    /// Compile and write target/<name>.cvm + target/<name>.casm.json (crush-source only)
     Build,
     /// Compile and run, without requiring a prior `build`
     Run,
@@ -61,7 +72,9 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
-fn load_capsule() -> anyhow::Result<PackageBuilder> {
+/// Load the manifest + the capsule root directory. Capsule-agnostic — does
+/// *not* assume a buildable capsule; per-subcommand guards enforce that.
+fn load_manifest_and_root() -> anyhow::Result<(Manifest, PathBuf)> {
     let cwd = std::env::current_dir()?;
     let manifest_path = crush_pkg::manifest::manifest_path(&cwd).ok_or_else(|| {
         anyhow::anyhow!(
@@ -70,22 +83,33 @@ fn load_capsule() -> anyhow::Result<PackageBuilder> {
         )
     })?;
     let manifest = Manifest::from_file(&manifest_path).context("reading manifest")?;
-    require_crush_language(&manifest)?;
     let root = manifest_path.parent().unwrap_or(&cwd).to_path_buf();
-    Ok(PackageBuilder::new(manifest, root))
+    Ok((manifest, root))
 }
 
-/// This skeleton only wires the `PackageBuilder` (crush-language) path.
-/// Fail loudly and by name for anything else rather than silently
-/// mis-running it — see the module doc's "Scope" note.
-fn require_crush_language(manifest: &Manifest) -> anyhow::Result<()> {
+/// `cmd_build` / `cmd_check` are crush-source-specific (they emit the
+/// `.cvm` artifact). For Script and Native capsules, refuse with a clear
+/// "does not apply" message — never silently mis-route to `PackageBuilder`.
+fn require_crush_buildable(manifest: &Manifest) -> anyhow::Result<()> {
     let lang = manifest.capsule.language.as_str();
-    if !lang.is_empty() && lang != "crush" {
+    let ext = Path::new(&manifest.capsule.entry)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let language_crush = lang == "crush";
+    let ext_crush = matches!(ext.as_str(), "crush" | "casm" | "sno");
+    let buildable = language_crush || (lang.is_empty() && ext_crush);
+    if !buildable {
+        let what = if lang.is_empty() {
+            format!(
+                "(no `language` field set; detected from entry extension `.{ext}`)"
+            )
+        } else {
+            format!("(manifest declares language = {lang})")
+        };
         bail!(
-            "squeeze v0.1 only builds/runs `language = \"crush\"` capsules \
-             (found `language = \"{lang}\"`). Script/Native capsule support \
-             is a known gap — see the module doc in src/main.rs. Use \
-             `crush-pkg` directly for this capsule in the meantime."
+            "squeeze build/check do not apply to Script/Native capsules {what}.              Use `squeeze run` (or `crush-pkg` directly) on this capsule."
         );
     }
     Ok(())
@@ -103,7 +127,9 @@ fn cmd_new(name: &str, dir: Option<PathBuf>) -> anyhow::Result<()> {
 }
 
 fn cmd_check() -> anyhow::Result<()> {
-    let pkg = load_capsule()?;
+    let (manifest, root) = load_manifest_and_root()?;
+    require_crush_buildable(&manifest)?;
+    let pkg = PackageBuilder::new(manifest, root);
     println!(
         "checking {} v{}",
         pkg.manifest().capsule.name,
@@ -115,7 +141,9 @@ fn cmd_check() -> anyhow::Result<()> {
 }
 
 fn cmd_build() -> anyhow::Result<()> {
-    let pkg = load_capsule()?;
+    let (manifest, root) = load_manifest_and_root()?;
+    require_crush_buildable(&manifest)?;
+    let pkg = PackageBuilder::new(manifest, root);
     println!(
         "building {} v{}",
         pkg.manifest().capsule.name,
@@ -131,43 +159,69 @@ fn cmd_build() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Dispatch `run` through `crush_pkg::runners::get_runner_for_payload`.
+/// Works for crush (CrushRunner via in-process VM), native (NativeRunner
+/// via child process), and ScriptRunner dispatch for bun/node/deno/python/
+/// sona scripts (each correctly resolving via `buckets` for pinned
+/// toolchains when `capsule.runtime_version` is set).
 fn cmd_run() -> anyhow::Result<()> {
-    let pkg = load_capsule()?;
-    let output = pkg.build()?;
-    let quotas = crush_vm::Quotas::default();
-    let result = crush_vm::run_with_caps(&output.program, &quotas, None)
-        .map_err(|e| anyhow::anyhow!("runtime error: {e}"))?;
-    print!("{}", result.output);
-    if !result.halted {
-        eprintln!("(program did not halt — quota exceeded)");
+    let (manifest, root) = load_manifest_and_root()?;
+    let entry_path = root.join(&manifest.capsule.entry);
+    dispatch_run(&manifest, &entry_path)
+}
+
+/// Default flow (`squeeze` with no subcommand): on crush-source capsules,
+/// check and build before running (writes `target/`). On Script/Native
+/// capsules, skip check/build entirely (they do not apply on those) and
+/// run via the runner dispatch.
+fn cmd_default() -> anyhow::Result<()> {
+    let (manifest, root) = load_manifest_and_root()?;
+    let entry_path = root.join(&manifest.capsule.entry);
+    let name = manifest.capsule.name.clone();
+    let version = manifest.capsule.version.clone();
+
+    if is_crush_source(&manifest, &entry_path) {
+        let pkg = PackageBuilder::new(manifest, root);
+        println!("checking {name} v{version}");
+        pkg.check()?;
+        println!("building {name} v{version}");
+        let output = pkg.build()?;
+        pkg.write_output(&output)?;
+        println!(
+            "  {} function(s), {} byte(s)",
+            output.functions.len(),
+            output.program.code.len()
+        );
+        println!("running {name}");
+        dispatch_run(pkg.manifest(), &entry_path)?;
+    } else {
+        println!("running {name} v{version}");
+        dispatch_run(&manifest, &entry_path)?;
     }
     Ok(())
 }
 
-fn cmd_default() -> anyhow::Result<()> {
-    let pkg = load_capsule()?;
-    let name = pkg.manifest().capsule.name.clone();
-    let version = pkg.manifest().capsule.version.clone();
+fn is_crush_source(manifest: &Manifest, entry_path: &Path) -> bool {
+    let lang = manifest.capsule.language.as_str();
+    let ext = entry_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    lang == "crush" || (lang.is_empty() && matches!(ext.as_str(), "crush" | "casm" | "sno"))
+}
 
-    println!("checking {name} v{version}");
-    pkg.check()?;
-
-    println!("building {name} v{version}");
-    let output = pkg.build()?;
-    pkg.write_output(&output)?;
-    println!(
-        "  {} function(s), {} byte(s)",
-        output.functions.len(),
-        output.program.code.len()
-    );
-
-    println!("running {name}");
-    let quotas = crush_vm::Quotas::default();
-    let result = crush_vm::run_with_caps(&output.program, &quotas, None)
-        .map_err(|e| anyhow::anyhow!("runtime error: {e}"))?;
-    print!("{}", result.output);
-    if !result.halted {
-        eprintln!("(program did not halt — quota exceeded)");
+fn dispatch_run(manifest: &Manifest, entry_path: &Path) -> anyhow::Result<()> {
+    let runner = crush_pkg::runners::get_runner_for_payload(entry_path, manifest);
+    let result = runner.run(manifest, entry_path, &[])?;
+    match result {
+        ExecutionResult::Process(mut child) => {
+            let status = child.wait()?;
+            if !status.success() {
+                std::process::exit(status.code().unwrap_or(1));
+            }
+        }
+        ExecutionResult::Vm | ExecutionResult::None => {}
     }
     Ok(())
 }

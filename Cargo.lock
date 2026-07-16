@@ -521,6 +521,7 @@ dependencies = [
  "crush-errors",
  "crush-ffi",
  "hex",
+ "libc",
  "libloading",
  "ort",
  "parking_lot",
