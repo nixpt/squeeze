@@ -46,3 +46,27 @@ Rejected alternatives:
 
 Outcome:
 Roadmap is now: M0 (shipped) → M1 (comprehensive tests + CI) → M2 (full-cutover Script/Native) → M5 (crates.io publish) → M3 (wasm/crush-web doc verification) → M4 (pack/sign distribution wrappers) → M6 (v1.0 CLI stability contract). Branch `planning/m1-m6-roadmap-refresh` carries the planning deltas; merge-at-user-authority.
+
+
+
+## 2026-07-16T13:30:00-05:00 — [STRATEGIC] [ADOPTED] [SEQUENCING-OVERRIDE] M2 implemented ahead of M1 sequencing; M1 still lands as SQUEEZE-2
+
+Reason:
+The 2026-07-16 morning decision said M1 (comprehensive tests) MUST land before M2 (the full cutover). On 2026-07-16 afternoon the user explicitly invoked "lets start m2", overriding the ordering for the rest of this session. Rationale that the override was sensible: the M2 cutover is a small, human-reviewable surface (a single Rust file, `src/main.rs`, grown 119 → 227 lines; one dispatch path through `crush_pkg::runners::get_runner_for_payload`; one per-subcommand guard `require_crush_buildable`), and M0's existing end-to-end `cargo check` exercise plus the M1 SQUEEZE-2 ticket both already document the surface tests that M2 needs. M1 still lands because SQUEEZE-2 — comprehensive tests + CI — covers the broader roadmap (status-line literal tests, exit-code tests, language-archetype tests across M3–M4 follow-ups, and the two M2-deferred follow-ups: args forwarding, halted status). This entry exists so a future session finds the rationale and treats the override as a deliberate, time-boxed move rather than drift to repeat.
+
+Artifacts:
+- `src/main.rs` @ `feature/m2-script-native-cutover` `a41b546` (119 → 227 lines; full cutover)
+- `.dejavue/state.md` (this commit: M2 code-complete snapshot)
+- `.dejavue/handoff.md` (this commit: M2 status + deferred follow-ups + upstream blocker)
+- `.jagent/planning/STATE.md` (this commit: snapshot table flipped; M2 code-complete; M1 still next merge gate)
+- `.jagent/planning/TASKS.md` (this commit: SQUEEZE-1 sub-bullets checked; P0 non-crush line clarified)
+- `.jagent/planning/tickets/SQUEEZE-1-script-native-capsules.md` (this commit: status → "Code Complete on feature/m2-script-native-cutover"; success criteria all ticked)
+- `release/v0.1.0` @ `d42710a` (unchanged this commit; merges separately)
+- `master` @ `63cb23d` (unchanged)
+
+Rejected alternatives:
+- **Defer M2 until M1 lands as first planned**: refused because that's exactly the 2026-07-16 morning decision the user overrode. Documenting, not re-litigating.
+- **Land M2 ahead of M1 without documenting the override**: refused because state-mutation without rationale is the failure mode that produces "wait, when did we stop testing" tomorrow. This entry's job is to make the override visible to the next session.
+
+Outcome:
+Per-session sequence so far: M0 → M2. M1 remains on the queue as SQUEEZE-2 (next merge-gated unit), now with a sharper target because M2 has landed the cutover surface — the M1 regression net must specifically cover dispatch correctness across capsule type, the literal status lines, the two deferred M2 follow-ups, and the exit codes documented in RELEASE.md.
