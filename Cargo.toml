@@ -28,9 +28,9 @@ path = "src/main.rs"
 # release, and these two requirements bumped to it. Until then develop with a
 # gitignored `.cargo/config.toml` `[patch.crates-io]` pointing at a local
 # crush-ast checkout (README "Developing against local crush-ast").
-crush-pkg = "0.9.0"
+crush-pkg = "0.10.0"
 # HostCapsBuilder: the run's capabilities and `sys.args()`.
-crush-lang-sdk = "0.9.0"
+crush-lang-sdk = "0.10.0"
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
 toml_edit = "0.22"
