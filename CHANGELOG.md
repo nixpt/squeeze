@@ -7,9 +7,19 @@ to [Semantic Versioning](https://semver.org/) as documented in
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-31
+
 squeeze is Crush's cargo again (SQUEEZE-8): the front door over crush-pkg,
-reversing crush-ast decision C-4 (CRUSH-167). Needs the next crush-ast
-release (crush-pkg with CRUSH-367); see `RELEASE.md`.
+reversing crush-ast decision C-4 (CRUSH-167). Built on crush-pkg and
+crush-lang-sdk 0.10.0 (CRUSH-367 imports through the package).
+
+### Release
+
+- CI (`ci.yml`: fmt, clippy, tests, `cargo package`, MSRV check) and a
+  tag-driven `release.yml`: crates.io via Trusted Publishing plus a GitHub
+  release with an x86_64 Linux binary and `SHA256SUMS` (SQUEEZE-3).
+- `rust-version` is 1.95, the floor crush-pkg 0.10 sets (was 1.85, which
+  could not build).
 
 ### Added
 

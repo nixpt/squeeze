@@ -4,9 +4,9 @@
 |-------|-------|
 | **ID** | SQUEEZE-3 |
 | **Priority** | P3 |
-| **Status** | Backlog |
+| **Status** | Done (2026-10-31) |
 | **Phase** | M5 |
-| **Assignee** | unassigned |
+| **Assignee** | vega |
 | **Dependencies** | SQUEEZE-2 (test suite for CI to run; lands together with SQUEEZE-2 as M1's second PR) |
 | **Estimated effort** | M |
 
@@ -50,3 +50,19 @@
 - Cross-platform matrix (Windows/macOS/Linux) — out of scope for first iteration; Linux-only CI is fine pre-1.0. Re-evaluate at M6.
 - Signed commits / signed tags — follow whatever `crush-ast` does
 - `crates-io-owners` / org-level publishing — use the existing `nixpt` singleton account
+
+## Resolution (2026-10-31, vega)
+
+- `.github/workflows/ci.yml`: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`
+  and `cargo test` on stable (the source is fmt/clippy clean since SQUEEZE-8), `cargo package`
+  (crate builds from its tarball), and `cargo check` on the MSRV read from `Cargo.toml`.
+- `.github/workflows/release.yml` on `v*` tags (or by hand): crates.io publish of `crush-squeeze`
+  through Trusted Publishing (`rust-lang/crates-io-auth-action`, no long-lived token; skips a
+  version that is already published) plus a GitHub release with the x86_64 Linux binary and
+  `SHA256SUMS`. `-f verify_auth=true` checks the Trusted Publishing config without publishing.
+- `rust-version` raised 1.85 → 1.95: crush-pkg/crush-lang-sdk 0.10 set that floor; 1.85 could not
+  build. No `rust-toolchain.toml`: pinning the MSRV toolchain for every local build would be worse
+  than the CI job checking it.
+- Not done: `cargo deny check advisories` (follow-up); macOS/Windows binaries.
+- First published release was crush-squeeze 0.1.0 (by hand, 2026-10-31); 0.2.0 is the first cut by
+  `release.yml`.
