@@ -1,6 +1,6 @@
 # SQUEEZE-7 — Remove dead `crush-vm` dependency
 
-**Status**: Backlog · **Priority**: P3 (hygiene)
+**Status**: Done (crush-0.8 port) · **Priority**: P3 (hygiene)
 
 ## Problem
 
@@ -13,6 +13,6 @@ check feature-gated code too).
 
 ## Done
 
-- [ ] Dep removed; `cargo check` + `cargo test` green
+- [x] Dep removed; `cargo check` + `cargo test` green (re-grepped src/: no `crush_vm` use)
 - [ ] Cross-ref: crush-ast ticket CRUSH-86 (tracks this + the
       crush-visuals-debug-bridge twin) — note completion there

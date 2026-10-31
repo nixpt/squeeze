@@ -19,16 +19,10 @@ name = "squeeze"
 path = "src/main.rs"
 
 [dependencies]
-# Peer path-dep, flat projects/ layout — same pattern buckets/crush-web use
-# to reach into crush-ast. Kept alongside `version =` (not registry-only):
-# `path` + `version` together means local builds resolve via the path
-# (crush-workspace/CLAUDE.md: don't switch this repo to a registry-only dep
-# until crush-pkg/crush-vm actually publish — doing so broke `cargo check`
-# here for no local benefit), while `cargo publish` still requires and
-# verifies the registry version, so the upstream-gate blocker documented in
-# RELEASE.md is unchanged: `cargo publish --dry-run` still fails until
-# crush-pkg v0.3.0 / crush-vm v0.3.0 land on crates.io.
-crush-pkg = { path = "../../crush-ast/crates/crush-pkg", version = "0.3.0" }
-crush-vm = { path = "../../crush-ast/crates/crush-vm", version = "0.3.0", default-features = false }
+# crush-pkg is consumed from crates.io (crush-ast 0.8.x line). crush-vm was a
+# dead dependency (SQUEEZE-7) and has been removed; crush-pkg pulls it in
+# transitively. For local crush-ast sources use a gitignored
+# `.cargo/config.toml` `[patch.crates-io]` override, not a committed path-dep.
+crush-pkg = "0.8.0"
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
