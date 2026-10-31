@@ -20,8 +20,7 @@ squeeze              # check, build, run — one command
 want just one step.
 
 `squeeze` doesn't reimplement any of `crush-pkg`'s actual pipeline — it's a
-thin composition layer over `crush_pkg::builder::PackageBuilder` and
-`crush_vm::run_with_caps`. `crush-pkg` remains the source of truth for
+thin composition layer over `crush_pkg::builder::PackageBuilder`. `crush-pkg` remains the source of truth for
 manifest parsing (`capsule.toml`), compilation, and bytecode format.
 
 ## What this is not (yet)
@@ -32,6 +31,15 @@ system — squeeze doesn't wire that in yet (a non-crush `language` value
 errors out explicitly rather than being silently mis-handled). See
 `.jagent/planning/tickets/SQUEEZE-1-script-native-capsules.md`.
 
+## Install
+
+```bash
+cargo install crush-squeeze   # installs the `squeeze` binary
+```
+
+The crate is `crush-squeeze` because `squeeze` on crates.io is an unrelated
+compression library; the command is still `squeeze`.
+
 ## Building
 
 ```bash
@@ -41,8 +49,7 @@ cargo build
 
 ## Provenance
 
-Peer path-dep on `../crush-ast/crates/{crush-pkg,crush-vm}` (flat
-`projects/` layout — same pattern `buckets` uses to reach other peers).
+Depends on the published `crush-pkg` 0.8 from crates.io (crush-ast 0.8.x).
 Named after Crush's own fruit-crushing metaphor (crush the grapes → squeeze
 the juice out → that's the build). See `.jagent/PROJECT.md` for the full
 naming story, including why "bob"/"bob the builder" was considered and

@@ -46,4 +46,4 @@ Sub-tasks of the roadmap. Milestones (ROADMAP.md) are the unit of strategy; task
   - [ ] `MANUAL.md` listing every subcommand, flag, exit code, status-line literal
   - [ ] `CHANGELOG.md` from v0.x → v1.0; post-v1.0 breaking-change gate
 
-- [ ] **SQUEEZE-7** — remove dead `crush-vm` dep (see ticket; from crush-ast CRUSH-71 client survey s412)
+- [x] **SQUEEZE-7** — remove dead `crush-vm` dep (see ticket; from crush-ast CRUSH-71 client survey s412)

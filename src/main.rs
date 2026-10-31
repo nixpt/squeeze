@@ -102,9 +102,7 @@ fn require_crush_buildable(manifest: &Manifest) -> anyhow::Result<()> {
     let buildable = language_crush || (lang.is_empty() && ext_crush);
     if !buildable {
         let what = if lang.is_empty() {
-            format!(
-                "(no `language` field set; detected from entry extension `.{ext}`)"
-            )
+            format!("(no `language` field set; detected from entry extension `.{ext}`)")
         } else {
             format!("(manifest declares language = {lang})")
         };

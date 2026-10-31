@@ -5,7 +5,8 @@ Intuitive one-command build tool for the Crush ecosystem — wraps
 `.jagent/PROJECT.md` for the full picture and `.jagent/planning/` for the
 execution board (`STATE.md` → `TASKS.md` → `tickets/`).
 
-Peer path-dep on `../../crush-ast/crates/{crush-pkg,crush-vm}` — lives in
+Depends on crates.io `crush-pkg` 0.8 (no path-dep). Published to crates.io as
+`crush-squeeze` (the binary is `squeeze`); see `RELEASE.md`. Lives in
 `projects/crush-workspace/` alongside crush-ast's other consumer repos (see
 `../CLAUDE.md` and `../README.md` for that grouping). Never commit to
 `master` directly on shared checkouts; this repo has none of that

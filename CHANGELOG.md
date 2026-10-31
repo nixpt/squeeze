@@ -5,6 +5,21 @@ All notable changes to `squeeze` are recorded here. The format follows
 to [Semantic Versioning](https://semver.org/) as documented in
 `SQUEEZE-6-v1-cli-stability-contract.md`.
 
+## [Unreleased]
+
+### Changed
+
+- Published to crates.io as **`crush-squeeze`**: `squeeze` there is an
+  unrelated compression library. The binary is still `squeeze`
+  (`cargo install crush-squeeze`).
+
+- Port to crush-ast 0.8: `crush-pkg` now comes from crates.io (`0.8.0`)
+  instead of a sibling path-dep on 0.3.0. Closures now compile and run.
+
+### Removed
+
+- Dead `crush-vm` dependency (SQUEEZE-7); nothing in `src/` used it.
+
 ## [0.1.0] - 2026-07-16
 
 The first crates.io-bound smoke publish of `squeeze`. Ships exactly what

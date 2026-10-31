@@ -6,9 +6,7 @@ Intuitive one-command build tool for the Crush ecosystem.
 
 - **Repository:** squeeze
 - **Language:** Rust (edition 2024)
-- **Ecosystem:** Peer of `crush-ast` (path-dep on `../crush-ast/crates/crush-pkg` +
-  `../crush-ast/crates/crush-vm`, flat `projects/` layout — same pattern `buckets`
-  uses to reach into other peers). Not a fork or replacement of `crush-pkg`: it's a
+- **Ecosystem:** Consumer of `crush-ast` (published `crush-pkg` 0.8 from crates.io). Not a fork or replacement of `crush-pkg`: it's a
   thin composition layer over `crush-pkg`'s existing `PackageBuilder` pipeline.
 - **Protocol:** CLI binary (`squeeze`). No library API of its own yet.
 
@@ -34,8 +32,7 @@ squeeze/
 
 ## Scope (v0.1)
 
-`language = "crush"` capsules only, via `crush_pkg::builder::PackageBuilder` +
-`crush_vm::run_with_caps` directly. `crush-pkg`'s own CLI `run` command also
+`language = "crush"` capsules only, via `crush_pkg::builder::PackageBuilder` directly. `crush-pkg`'s own CLI `run` command also
 supports Script (bun/node/deno/python) and Native capsules through the
 `CapsuleRunner`/`CrushRunner` trait system in `crush_pkg::runners` — squeeze
 doesn't wire that in yet (see `SQUEEZE-1`). A non-`crush` `language` value in
