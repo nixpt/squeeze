@@ -6,7 +6,7 @@ squeeze needs that touches Crush code goes into crush-pkg (crush-ast) first. See
 `.jagent/PROJECT.md` for the full picture and `.jagent/planning/` for the
 execution board (`STATE.md` → `TASKS.md` → `tickets/`).
 
-Depends on crates.io `crush-pkg` / `crush-lang-sdk` 0.9 (no path-dep); to
+Depends on crates.io `crush-pkg` / `crush-lang-sdk` 0.10 (no path-dep); to
 develop against crush-ast sources use a gitignored `.cargo/config.toml`
 `[patch.crates-io]` for BOTH crates (README) and never commit the Cargo.lock
 it produces. Published to crates.io as

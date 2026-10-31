@@ -3,10 +3,10 @@
 # compression library (jamolnng, 2020). The binary is still `squeeze`.
 name = "crush-squeeze"
 description = "Crush's cargo: create, build, run and test Crush programs (front door over crush-pkg)"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
-# edition = "2024" stabilised in 1.85.0; pin the contract for downstream callers.
-rust-version = "1.85"
+# The floor is set by the dependencies: crush-pkg / crush-lang-sdk 0.10 need 1.95.
+rust-version = "1.95"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/nixpt/squeeze"
 repository = "https://github.com/nixpt/squeeze"
@@ -22,12 +22,10 @@ path = "src/main.rs"
 
 [dependencies]
 # squeeze is the front door; crush-pkg (crush-ast) is the engine. Both come
-# from crates.io. SQUEEZE-8 needs the crush-pkg API from crush-ast CRUSH-367
-# (import mode, build_file, quiet, write_output_to, scaffold_lib_package),
-# which is NOT in crush-pkg 0.9.0: release builds need the next crush-ast
-# release, and these two requirements bumped to it. Until then develop with a
-# gitignored `.cargo/config.toml` `[patch.crates-io]` pointing at a local
-# crush-ast checkout (README "Developing against local crush-ast").
+# from crates.io and move together (0.10 carries the CRUSH-367 import API).
+# To develop against a local crush-ast checkout, use a gitignored
+# `.cargo/config.toml` `[patch.crates-io]` for BOTH crates (README
+# "Developing against local crush-ast").
 crush-pkg = "0.10.0"
 # HostCapsBuilder: the run's capabilities and `sys.args()`.
 crush-lang-sdk = "0.10.0"

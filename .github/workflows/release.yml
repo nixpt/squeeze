@@ -1,0 +1,154 @@
+name: release
+
+# Releases squeeze from a vX.Y.Z tag:
+#   1. publishes `crush-squeeze` to crates.io with Trusted Publishing
+#      (no long-lived token), skipping a version that is already there;
+#   2. builds the `squeeze` binary for x86_64 Linux and attaches it, with
+#      SHA256SUMS, to the GitHub release for the tag (created if missing).
+# Runs when a vX.Y.Z tag is pushed, or by hand for a given tag. The tag's
+# version must equal Cargo.toml's. How to cut a release: RELEASE.md.
+#
+# One-time setup on crates.io (crush-squeeze → Settings → Trusted Publishing):
+#   repository owner: nixpt · repository: squeeze · workflow: release.yml
+#   environment: (leave empty)
+# Check it with: gh workflow run release.yml -f verify_auth=true
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (vX.Y.Z); empty with verify_auth"
+        type: string
+        required: false
+      verify_auth:
+        description: "Only check that crates.io issues a Trusted Publishing token (no publish)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Trusted Publishing exchanges the OIDC token for a crates.io token
+    steps:
+      - name: Check the tag
+        if: inputs.verify_auth != true
+        run: |
+          case "$RELEASE_TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::release needs a tag vX.Y.Z; got '$RELEASE_TAG'"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.verify_auth == true && github.ref || format('refs/tags/{0}', env.RELEASE_TAG) }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Version matches the tag; skip if already published
+        id: check
+        if: inputs.verify_auth != true
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 | python3 -c 'import sys,json; print(json.load(sys.stdin)["packages"][0]["version"])')
+          if [ "v$version" != "$RELEASE_TAG" ]; then
+            echo "::error::Cargo.toml version is $version but the tag is $RELEASE_TAG"; exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' -A 'squeeze-release (github.com/nixpt/squeeze)' \
+            "https://crates.io/api/v1/crates/crush-squeeze/$version")
+          if [ "$code" = 200 ]; then
+            echo "crush-squeeze $version is already on crates.io; nothing to publish"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package (before fetching the token; it expires after 30 minutes)
+        if: inputs.verify_auth != true && steps.check.outputs.skip != 'true'
+        run: cargo package --locked
+
+      - name: crates.io Trusted Publishing token
+        id: auth
+        if: inputs.verify_auth == true || steps.check.outputs.skip != 'true'
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Report Trusted Publishing status
+        if: inputs.verify_auth == true
+        env:
+          TP_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          if [ -n "$TP_TOKEN" ]; then
+            echo "Trusted Publishing OK: crates.io issued a token to this workflow"
+          else
+            echo "::error::crates.io issued no token; check crush-squeeze's Trusted Publishing config (nixpt/squeeze, release.yml)"; exit 1
+          fi
+
+      - name: Publish
+        if: inputs.verify_auth != true && steps.check.outputs.skip != 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish --locked
+
+  binaries:
+    if: inputs.verify_auth != true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and upload assets
+    env:
+      TARGET: x86_64-unknown-linux-gnu
+    steps:
+      - name: Check the tag
+        run: |
+          case "$RELEASE_TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::release needs a tag vX.Y.Z; got '$RELEASE_TAG'"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release --locked --target "$TARGET"
+
+      - name: Package
+        id: pkg
+        run: |
+          version="${RELEASE_TAG#v}"
+          name="squeeze-$version-$TARGET"
+          mkdir -p "dist/$name"
+          cp "target/$TARGET/release/squeeze" README.md CHANGELOG.md "dist/$name/"
+          cp LICENSE* "dist/$name/" 2>/dev/null || true
+          "dist/$name/squeeze" --version
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+          (cd dist && sha256sum "$name.tar.gz" > SHA256SUMS)
+          cat dist/SHA256SUMS
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Attach to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=$(awk -v v="${RELEASE_TAG#v}" '
+            $0 ~ "^## \\[" v "\\]" {on=1; next}
+            on && /^## \[/ {exit}
+            on {print}' CHANGELOG.md)
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "squeeze $RELEASE_TAG" \
+              --notes "${notes:-See CHANGELOG.md.}"
+          fi
+          gh release upload "$RELEASE_TAG" --clobber \
+            "dist/${{ steps.pkg.outputs.name }}.tar.gz" dist/SHA256SUMS
