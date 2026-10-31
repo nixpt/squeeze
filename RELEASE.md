@@ -5,6 +5,18 @@ belongs to an unrelated 2020 compression library); the binary it installs is
 `squeeze`. It depends only on published crates (`crush-pkg` from crush-ast's
 0.8.x line), so it publishes from any checkout.
 
+## Before the next release (SQUEEZE-8)
+
+SQUEEZE-8 uses crush-pkg API from crush-ast CRUSH-367 (import mode,
+`PackageBuilder::{build_file, quiet, write_output_to, resolve}`,
+`scaffold_lib_package`, `builder::{import_name, uses_imports}`), which is
+**not in crush-pkg 0.9.0**. Before publishing:
+
+1. Release crush-ast with CRUSH-367 and publish it to crates.io.
+2. Raise `crush-pkg` and `crush-lang-sdk` in `Cargo.toml` to that version
+   (both together), then run `cargo update -p crush-pkg -p crush-lang-sdk`.
+3. Build with no `.cargo/config.toml` patch present.
+
 ## Steps
 
 1. On `master`, move the `[Unreleased]` section of `CHANGELOG.md` under the new

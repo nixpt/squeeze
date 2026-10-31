@@ -46,4 +46,5 @@ Sub-tasks of the roadmap. Milestones (ROADMAP.md) are the unit of strategy; task
   - [ ] `MANUAL.md` listing every subcommand, flag, exit code, status-line literal
   - [ ] `CHANGELOG.md` from v0.x → v1.0; post-v1.0 breaking-change gate
 
+- [x] **SQUEEZE-8** — Crush's cargo: standard layout, imports through deps, new/build/run/check/test/clean/add/remove/fmt/lint, SQUEEZE_ADMIT (see ticket). Advances SQUEEZE-1 (args forwarding done), SQUEEZE-2 (11 CLI tests), SQUEEZE-6 (status lines + exit codes now cargo-shaped; supersedes the 1/2/3/4 exit-code plan).
 - [x] **SQUEEZE-7** — remove dead `crush-vm` dep (see ticket; from crush-ast CRUSH-71 client survey s412)

@@ -7,7 +7,49 @@ to [Semantic Versioning](https://semver.org/) as documented in
 
 ## [Unreleased]
 
+squeeze is Crush's cargo again (SQUEEZE-8): the front door over crush-pkg,
+reversing crush-ast decision C-4 (CRUSH-167). Needs the next crush-ast
+release (crush-pkg with CRUSH-367); see `RELEASE.md`.
+
+### Added
+
+- The standard layout (`src/main.crush`, `tests/*.crush`, `capsule.lock`,
+  `target/`), with imports through the package: `src/` is a search root,
+  and each dependency (and the package itself) is importable by name, so
+  `import facet { facet_run }` works from a git dependency.
+- `squeeze new NAME --cli` (facet @ v0.2.0) and `--lib`.
+- `squeeze run -- ARGS…` forwards arguments (`sys.args()`). `--fs`, `--env`
+  and `--time` grant capabilities. The program's `sys.exit(n)` becomes
+  squeeze's exit status.
+- `squeeze build --release` writes to `target/release/`. crush-frontend has
+  no optimisation levels, so the code is the same as a debug build.
+- `squeeze test [FILTER]`: runs each `tests/*.crush` in its own process,
+  shows output only for failures, and ends with `test result:`.
+- `squeeze clean`, `squeeze add` (`--git` + `--tag`/`--rev`/`--branch`, or
+  `--path`; updates `capsule.lock`, keeps the comments in `capsule.toml`)
+  and `squeeze remove`.
+- `squeeze fmt [--check]` / `squeeze lint` hand off to polish
+  (`$SQUEEZE_POLISH` or `polish` on PATH).
+- `SQUEEZE_ADMIT`: a command prefix that build, run, check and test re-run
+  themselves under (fleet build admission, e.g. buildsched/bob).
+- `--offline` on every command.
+- `tests/cli.rs`: 11 end-to-end tests over the real binary (SQUEEZE-2, part).
+
 ### Changed
+
+- **Status lines and exit codes (breaking).** The old status lines
+  (`checking <name> v<version>`, `building …`, `running …`, `done: N function(s)…`)
+  are replaced by cargo-style lines on **stderr**
+  (`   Compiling NAME vX (DIR)`, `    Finished …`, `     Running …`), so stdout
+  carries only the program's output. Exit codes are 0 ok, 1 failure,
+  2 usage error, with the program's own status passed through on `run`.
+  Neither had been ratified (SQUEEZE-6).
+- The bare `squeeze` builds and runs, as before, but no longer runs a
+  separate check pass first (the build already compiles the whole package).
+- `build` writes `target/NAME.cvm1` + `target/NAME.casm` (crush-pkg's
+  formats since crush-ast #365), not `.cvm` + `.casm.json`.
+- Depends on crates.io `crush-pkg` and `crush-lang-sdk` 0.9 (plus
+  `toml_edit`).
 
 - Published to crates.io as **`crush-squeeze`**: `squeeze` there is an
   unrelated compression library. The binary is still `squeeze`
