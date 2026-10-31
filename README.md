@@ -31,6 +31,15 @@ system — squeeze doesn't wire that in yet (a non-crush `language` value
 errors out explicitly rather than being silently mis-handled). See
 `.jagent/planning/tickets/SQUEEZE-1-script-native-capsules.md`.
 
+## Install
+
+```bash
+cargo install crush-squeeze   # installs the `squeeze` binary
+```
+
+The crate is `crush-squeeze` because `squeeze` on crates.io is an unrelated
+compression library; the command is still `squeeze`.
+
 ## Building
 
 ```bash

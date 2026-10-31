@@ -9,6 +9,10 @@ to [Semantic Versioning](https://semver.org/) as documented in
 
 ### Changed
 
+- Published to crates.io as **`crush-squeeze`**: `squeeze` there is an
+  unrelated compression library. The binary is still `squeeze`
+  (`cargo install crush-squeeze`).
+
 - Port to crush-ast 0.8: `crush-pkg` now comes from crates.io (`0.8.0`)
   instead of a sibling path-dep on 0.3.0. Closures now compile and run.
 
