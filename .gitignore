@@ -11,3 +11,6 @@
 .dejavue/embedder_circuit.json
 .dejavue/timeline.jsonl.bak-*
 
+
+# local [patch.crates-io] override for developing against crush-ast sources
+.cargo/config.toml

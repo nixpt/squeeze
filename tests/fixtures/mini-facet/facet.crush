@@ -1,0 +1,25 @@
+// Test double for facet (CRUSH-352 tests): `facet_parse(spec)` with --help
+// (exit 0), unknown options (exit 2) and positionals only.
+fn facet_parse(spec) {
+    let argv = sys.args()
+    let words = []
+    for a in argv {
+        if a == "--help" || a == "-h" {
+            io.print("Usage: " + spec.usage)
+            sys.exit(0)
+        }
+        if len(a) > 1 && a[0:1] == "-" {
+            io.print("facet: " + spec.name + ": unrecognized option '" + a + "'")
+            sys.exit(2)
+        }
+        array.push(words, a)
+    }
+    return { words: words, repeat: 1, verbose: false }
+}
+
+// facet_run(spec, { main: |args| => ... }): parse, then call the handler.
+fn facet_run(spec, handlers) {
+    let args = facet_parse(spec)
+    let handler = handlers.main
+    return handler(args)
+}
