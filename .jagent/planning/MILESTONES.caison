@@ -1,0 +1,89 @@
+@caison { version: "1.0" }
+
+schema: "milestones/1"
+
+project: {
+  name: "squeeze"
+  kind: "repo"
+  lifecycle: "shipped" @verified { at: "2026-11-18", by: "altair" }
+  lifecycle_since: "2026-10-31"
+  home: "zorro"
+  ticket_prefix: "SQUEEZE"
+  summary: "Crush's cargo, a front door over crush-pkg; v0.2.0 released 2026-10-31 and on crates.io as crush-squeeze (binary squeeze); script/native run path on master; test coverage partial; SQUEEZE-9 blocked on buildsched BSC-30"
+  north_star: "one intuitive command for the whole Crush build/run/ship lifecycle, crush-pkg underneath, cargo-shaped on top"
+  stewards: ["altair"]
+  evidence: {
+    default_branch: "master"
+    registries: [{ registry: "crates.io", name: "crush-squeeze" }]
+  }
+}
+
+milestones: [
+  {
+    id: "M0"
+    title: "ship the skeleton"
+    status: "done" @verified { at: "2026-11-18", by: "altair" }
+    done_at: "2026-07-14"
+    done_when: ["new / check / build / run + the default composed flow verified against a real capsule (STATE.md, 2026-07-14)"]
+  },
+  {
+    id: "M1"
+    title: "test coverage (comprehensive)"
+    status: "next" ~0.7 @verified { at: "2026-11-18", by: "altair" }
+    tickets: ["SQUEEZE-2", "SQUEEZE-9"]
+    done_when: [
+      { claim: "a CLI test suite exists", check: { kind: "file", path: "tests/cli.rs" } },
+      "every clap arg, status-line format, documented exit code and error path is asserted (SQUEEZE-2, Backlog)",
+      "a real bob admit end-to-end test (SQUEEZE-9, blocked on buildsched BSC-30 / nixpt/buildsched#14)",
+    ]
+    notes: "partial: tests/cli.rs has 11 tests and CI runs them (SQUEEZE-3); the comprehensive sweep has not started"
+  },
+  {
+    id: "M2"
+    title: "script/native capsule support (full cutover)"
+    status: "done" ~0.7 @verified { at: "2026-11-18", by: "altair" }
+    done_at: "2026-10-31"
+    tickets: ["SQUEEZE-1", "SQUEEZE-8"]
+    done_when: [
+      { claim: "run goes through crush-pkg's runner for every capsule type", check: { kind: "file", path: "src/main.rs", contains: "get_runner_for_payload" } },
+      { claim: "build/check refuse non-crush via require_crush_buildable", check: { kind: "file", path: "src/main.rs", contains: "require_crush_buildable" } },
+      "a python/node capsule runs end-to-end through squeeze (not re-run here)",
+    ]
+    notes: "landed with SQUEEZE-8 (PR #2); SQUEEZE-1's ticket file still says code-complete on the old feature branch"
+  },
+  {
+    id: "M5"
+    title: "CI + crates.io publishing"
+    status: "done" @verified { at: "2026-11-18", by: "altair" }
+    done_at: "2026-10-31"
+    version: "v0.2.0"
+    tickets: ["SQUEEZE-3", "SQUEEZE-7"]
+    done_when: [
+      { claim: "CI and tag-driven release workflows", check: { kind: "file", path: ".github/workflows/release.yml" } },
+      { claim: "v0.2.0 tagged", check: { kind: "tag", pattern: "v0.2.0" } },
+      { claim: "crush-squeeze on crates.io", check: { kind: "published", registry: "crates.io", name: "crush-squeeze" } },
+    ]
+  },
+  {
+    id: "M3"
+    title: "wasm target + crush-web integration"
+    status: "planned" @verified { at: "2026-11-18", by: "altair" }
+    tickets: ["SQUEEZE-4"]
+    done_when: ["an example capsule built with squeeze runs unmodified in a browser via crush-web; README has the recipe"]
+  },
+  {
+    id: "M4"
+    title: "distribution commands"
+    status: "planned" @verified { at: "2026-11-18", by: "altair" }
+    tickets: ["SQUEEZE-5"]
+    done_when: ["squeeze pack / sign / verify pass through to crush_pkg::ops with squeeze's status lines"]
+  },
+  {
+    id: "M6"
+    title: "v1.0 CLI stability contract"
+    status: "planned" @verified { at: "2026-11-18", by: "altair" }
+    tickets: ["SQUEEZE-6"]
+    depends_on: ["M1", "crush-ast:FREEZE"]
+    done_when: ["MANUAL.md lists every subcommand, flag, exit code and status-line format; CHANGELOG from v0.x to v1.0"]
+  },
+]
